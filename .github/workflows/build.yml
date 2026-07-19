@@ -24,6 +24,14 @@ jobs:
       - name: Set up Ninja
         run: choco install ninja
 
+      # chiaki-ng calls the FindPythonInterp module and its vendored libs
+      # declare cmake_minimum_required < 3.5 — both removed/rejected by CMake
+      # 4.x (the default on current runners). Pin to the last 3.x.
+      - name: Pin CMake 3.31
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.6'
+
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
@@ -64,8 +72,14 @@ jobs:
 
       - name: Install build deps
         run: |
-          brew install cmake ninja pkg-config openssl@3 opus json-c libevent miniupnpc protobuf
+          brew install ninja pkg-config openssl@3 opus json-c libevent miniupnpc protobuf
           python3 -m pip install --break-system-packages --upgrade protobuf grpcio-tools
+
+      # See Windows job — pin CMake < 4.x for chiaki-ng compatibility.
+      - name: Pin CMake 3.31
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: '3.31.6'
 
       - name: Configure
         run: >
