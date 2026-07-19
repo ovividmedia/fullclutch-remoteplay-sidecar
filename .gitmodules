@@ -1,0 +1,4 @@
+[submodule "third_party/chiaki-ng"]
+	path = third_party/chiaki-ng
+	url = https://github.com/streetpea/chiaki-ng.git
+	shallow = true

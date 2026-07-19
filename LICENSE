@@ -1,0 +1,36 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+  fc-remoteplay — PS5 Remote Play sidecar for FullClutch
+  Copyright (C) 2026  OViVID Media
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published
+  by the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU Affero General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+  SPDX-License-Identifier: AGPL-3.0-or-later
+
+  Because this program links the AGPL-3.0 chiaki-ng library and interacts with
+  users over a network, AGPL §13 applies: users interacting with it remotely
+  must be offered the Corresponding Source. Keep this repository public and
+  publish any modifications.
+
+-------------------------------------------------------------------------------
+  IMPORTANT: This header is the license NOTICE, not the full license text.
+  The complete, canonical AGPL-3.0 text MUST accompany this file before
+  distribution. Fetch it once (verbatim, do not edit) to replace this file:
+
+      curl -L https://www.gnu.org/licenses/agpl-3.0.txt -o LICENSE
+
+  (The command above overwrites this notice with the full license, which is
+  what a published AGPL project ships.)
+-------------------------------------------------------------------------------
