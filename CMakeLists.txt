@@ -19,25 +19,27 @@ FetchContent_Declare(nlohmann_json
 FetchContent_MakeAvailable(nlohmann_json)
 
 # ── libwebsockets ────────────────────────────────────────────────────────────
-# Prefer a system/vcpkg package; fall back to building it from source.
-find_package(libwebsockets QUIET)
-if(NOT libwebsockets_FOUND)
-  set(LWS_WITHOUT_TESTAPPS   ON  CACHE BOOL "" FORCE)
-  set(LWS_WITHOUT_TEST_SERVER ON CACHE BOOL "" FORCE)
-  set(LWS_WITH_SHARED        OFF CACHE BOOL "" FORCE)
-  set(LWS_WITH_SSL           OFF CACHE BOOL "" FORCE)  # localhost only
-  FetchContent_Declare(libwebsockets
-    GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
-    GIT_TAG        v4.3.3)
-  FetchContent_MakeAvailable(libwebsockets)
-  set(LWS_TARGET websockets)
-else()
-  set(LWS_TARGET websockets)
-endif()
+# Built from source, SSL off — we only serve ws:// on 127.0.0.1.
+set(LWS_WITHOUT_TESTAPPS    ON  CACHE BOOL "" FORCE)
+set(LWS_WITHOUT_TEST_SERVER ON  CACHE BOOL "" FORCE)
+set(LWS_WITHOUT_TEST_CLIENT ON  CACHE BOOL "" FORCE)
+set(LWS_WITHOUT_TEST_PING   ON  CACHE BOOL "" FORCE)
+set(LWS_WITH_SHARED         OFF CACHE BOOL "" FORCE)
+set(LWS_WITH_SSL            OFF CACHE BOOL "" FORCE)
+set(LWS_WITH_MINIMAL_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_Declare(libwebsockets
+  GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
+  GIT_TAG        v4.3.3)
+FetchContent_MakeAvailable(libwebsockets)
 
-# ── chiaki-ng core (git submodule) ───────────────────────────────────────────
-# We build ONLY the C library (lib/), never the Qt GUI. The submodule lives at
-# third_party/chiaki-ng — run `git submodule update --init --recursive` first.
+# ── chiaki-ng (git submodule) ────────────────────────────────────────────────
+# We consume chiaki-ng's ROOT CMake with everything but the core lib disabled —
+# that pulls in its vendored third-party (curl, jerasure, gf-complete, nanopb)
+# and its cmake/Find* modules, producing the `chiaki-lib` target.
+#
+# External deps chiaki-lib still needs from the system / vcpkg / brew:
+#   openssl, opus, json-c, libevent, miniupnpc, protobuf(+protoc), pkg-config
+# (see vcpkg.json in this repo — it is chiaki-ng's manifest minus GUI deps)
 set(CHIAKI_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/third_party/chiaki-ng")
 if(NOT EXISTS "${CHIAKI_ROOT}/lib/CMakeLists.txt")
   message(FATAL_ERROR
@@ -45,13 +47,14 @@ if(NOT EXISTS "${CHIAKI_ROOT}/lib/CMakeLists.txt")
     "Run: git submodule update --init --recursive")
 endif()
 
-# Turn off everything except the core library so we don't drag in Qt/SDL/etc.
-set(CHIAKI_ENABLE_GUI      OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_CLI      OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_TESTS    OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_ANDROID  OFF CACHE BOOL "" FORCE)
-set(CHIAKI_LIB_ENABLE_OPUS ON  CACHE BOOL "" FORCE)
-add_subdirectory("${CHIAKI_ROOT}/lib" chiaki-lib EXCLUDE_FROM_ALL)
+set(CHIAKI_ENABLE_GUI            OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_CLI            OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_TESTS          OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_ANDROID        OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_BOREALIS       OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_STEAM_SHORTCUT OFF CACHE BOOL "" FORCE)
+set(CHIAKI_LIB_ENABLE_OPUS       ON  CACHE BOOL "" FORCE)
+add_subdirectory("${CHIAKI_ROOT}" chiaki-ng EXCLUDE_FROM_ALL)
 
 # ── fc-remoteplay executable ─────────────────────────────────────────────────
 add_executable(fc-remoteplay
@@ -59,12 +62,9 @@ add_executable(fc-remoteplay
   src/ws_server.cpp
   src/session_bridge.cpp)
 
-target_include_directories(fc-remoteplay PRIVATE
-  "${CHIAKI_ROOT}/lib/include")
-
 target_link_libraries(fc-remoteplay PRIVATE
-  chiaki-lib               # API: target name exported by chiaki-ng lib/ (may be `chiaki` on some tags)
-  ${LWS_TARGET}
+  chiaki-lib
+  websockets
   nlohmann_json::nlohmann_json)
 
 if(WIN32)

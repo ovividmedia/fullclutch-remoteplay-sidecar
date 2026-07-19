@@ -1,0 +1,13 @@
+{
+  "name": "fc-remoteplay",
+  "version": "1.0.0",
+  "dependencies": [
+    "pkgconf",
+    "protobuf",
+    "openssl",
+    "json-c",
+    "libevent",
+    "miniupnpc",
+    "opus"
+  ]
+}
