@@ -66,6 +66,13 @@ set(CHIAKI_ENABLE_PI_DECODER      OFF CACHE STRING "" FORCE)
 set(CHIAKI_LIB_ENABLE_OPUS        ON  CACHE BOOL "" FORCE)
 add_subdirectory("${CHIAKI_ROOT}" chiaki-ng EXCLUDE_FROM_ALL)
 
+# gf-complete's gf_cpu.c calls the MSVC intrinsic __cpuidex without including
+# <intrin.h>. MSVC's cl auto-declares its intrinsics; clang-cl (which we build
+# with on Windows — see build.yml) does not, so force-include the header.
+if(WIN32 AND TARGET gf_complete)
+  target_compile_options(gf_complete PRIVATE /FIintrin.h)
+endif()
+
 # ── fc-remoteplay executable ─────────────────────────────────────────────────
 add_executable(fc-remoteplay
   src/main.cpp

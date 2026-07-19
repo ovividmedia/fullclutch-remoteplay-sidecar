@@ -50,6 +50,18 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade protobuf grpcio-tools
 
+      # Cache vcpkg-built deps (openssl/protobuf/etc — ~30 min from scratch) in
+      # the Actions cache. Only enabled when the runtime cache env is present so
+      # a missing token can never fail the install.
+      - name: Enable vcpkg GHA binary cache
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const keys = ['ACTIONS_CACHE_URL', 'ACTIONS_RESULTS_URL', 'ACTIONS_RUNTIME_TOKEN'].filter(k => process.env[k]);
+            for (const k of keys) core.exportVariable(k, process.env[k]);
+            if (keys.includes('ACTIONS_RUNTIME_TOKEN'))
+              core.exportVariable('VCPKG_BINARY_SOURCES', 'clear;x-gha,readwrite');
+
       # bash so $VCPKG_INSTALLATION_ROOT expands reliably (PowerShell folded it
       # into a literal). CMAKE_POLICY_VERSION_MINIMUM=3.5 lets chiaki's vendored
       # libs + libwebsockets (which declare cmake_minimum_required < 3.5)
