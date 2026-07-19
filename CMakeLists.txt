@@ -27,10 +27,17 @@ set(LWS_WITHOUT_TEST_PING   ON  CACHE BOOL "" FORCE)
 set(LWS_WITH_SHARED         OFF CACHE BOOL "" FORCE)
 set(LWS_WITH_SSL            OFF CACHE BOOL "" FORCE)
 set(LWS_WITH_MINIMAL_EXAMPLES OFF CACHE BOOL "" FORCE)
+# Third-party warnings must not fail our build: with clang-cl, lws's MSVC-only
+# /Zc:preprocessor flag triggers an unused-argument warning that its
+# -Werror//WX then promotes to an error.
+set(DISABLE_WERROR ON CACHE BOOL "" FORCE)
 FetchContent_Declare(libwebsockets
   GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
   GIT_TAG        v4.3.3)
 FetchContent_MakeAvailable(libwebsockets)
+if(WIN32)
+  target_compile_options(websockets PRIVATE -Wno-unused-command-line-argument)
+endif()
 
 # ── chiaki-ng (git submodule) ────────────────────────────────────────────────
 # We consume chiaki-ng's ROOT CMake with everything but the core lib disabled —
