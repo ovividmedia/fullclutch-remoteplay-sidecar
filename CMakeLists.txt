@@ -36,7 +36,11 @@ FetchContent_Declare(libwebsockets
   GIT_TAG        v4.3.3)
 FetchContent_MakeAvailable(libwebsockets)
 if(WIN32)
-  target_compile_options(websockets PRIVATE -Wno-unused-command-line-argument)
+  # DISABLE_WERROR drops lws's /WX, but its Clang branch hardcodes -Werror
+  # into CMAKE_C_FLAGS. Target options come later on the command line, so
+  # -Wno-error reliably downgrades everything back to warnings.
+  target_compile_options(websockets PRIVATE
+    -Wno-error -Wno-unused-command-line-argument)
 endif()
 
 # ── chiaki-ng (git submodule) ────────────────────────────────────────────────
