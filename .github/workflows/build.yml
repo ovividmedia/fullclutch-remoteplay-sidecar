@@ -35,6 +35,16 @@ jobs:
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
 
+      # chiaki's C sources use C99 VLAs (ctrl.c, rudp.c, regist.c, session.c,
+      # holepunch.c), which MSVC's cl will never support. clang-cl is
+      # MSVC-ABI-compatible, uses the MSVC headers/libs set up above, and
+      # accepts VLAs — upstream chiaki-ng never builds with cl either.
+      - name: Ensure clang-cl
+        shell: bash
+        run: |
+          clang-cl --version || choco install -y llvm
+          echo 'C:\Program Files\LLVM\bin' >> "$GITHUB_PATH"
+
       - name: Python deps for nanopb codegen
         run: |
           python -m pip install --upgrade pip setuptools wheel
@@ -51,6 +61,8 @@ jobs:
             -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
             -DVCPKG_TARGET_TRIPLET=x64-windows \
             -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_C_COMPILER=clang-cl \
+            -DCMAKE_CXX_COMPILER=clang-cl \
             -DCMAKE_BUILD_TYPE=Release
 
       - name: Build

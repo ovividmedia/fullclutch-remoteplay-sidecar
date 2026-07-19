@@ -25,7 +25,7 @@ struct PerSession {
     bool authed = false;
 };
 
-int WsServer::LwsCallback(lws* wsi, int reason, void* user, void* in, size_t len) {
+int WsServer::LwsCallback(lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len) {
     lws_context* ctx = lws_get_context(wsi);
     auto* self = static_cast<WsServer*>(lws_context_user(ctx));
     auto* pss  = static_cast<PerSession*>(user);

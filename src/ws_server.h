@@ -14,8 +14,10 @@
 #include <thread>
 #include <vector>
 
-struct lws;
-struct lws_context;
+// Full include (not a forward decl): LwsCallback must use the exact
+// lws_callback_function signature — lws_callback_reasons is an enum, and
+// clang rejects an int-parameter mismatch in the lws_protocols initializer.
+#include <libwebsockets.h>
 
 namespace fcrp {
 
@@ -46,7 +48,7 @@ public:
     bool HasClient() const { return client_ != nullptr; }
 
 private:
-    static int LwsCallback(lws* wsi, int reason, void* user, void* in, size_t len);
+    static int LwsCallback(lws* wsi, lws_callback_reasons reason, void* user, void* in, size_t len);
     void ServiceLoop();
     void FlushQueue(lws* wsi);
 
