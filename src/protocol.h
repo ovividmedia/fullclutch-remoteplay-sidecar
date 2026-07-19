@@ -15,6 +15,7 @@
 //   bytes 10.. : payload (Annex B H.264 NAL units, or interleaved s16le PCM)
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 #include <cstddef>
 #include <vector>

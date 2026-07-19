@@ -40,12 +40,18 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel
           python -m pip install --upgrade protobuf grpcio-tools
 
+      # bash so $VCPKG_INSTALLATION_ROOT expands reliably (PowerShell folded it
+      # into a literal). CMAKE_POLICY_VERSION_MINIMUM=3.5 lets chiaki's vendored
+      # libs + libwebsockets (which declare cmake_minimum_required < 3.5)
+      # configure under any CMake version.
       - name: Configure (vcpkg manifest supplies openssl/opus/json-c/libevent/miniupnpc/protobuf)
-        run: >
-          cmake -B build -G Ninja
-          -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
-          -DVCPKG_TARGET_TRIPLET=x64-windows
-          -DCMAKE_BUILD_TYPE=Release
+        shell: bash
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-windows \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5 \
+            -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --parallel
@@ -85,6 +91,7 @@ jobs:
         run: >
           cmake -B build -G Ninja
           -DCMAKE_BUILD_TYPE=Release
+          -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
 
       - name: Build
