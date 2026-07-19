@@ -47,13 +47,23 @@ if(NOT EXISTS "${CHIAKI_ROOT}/lib/CMakeLists.txt")
     "Run: git submodule update --init --recursive")
 endif()
 
-set(CHIAKI_ENABLE_GUI            OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_CLI            OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_TESTS          OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_ANDROID        OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_BOREALIS       OFF CACHE BOOL "" FORCE)
-set(CHIAKI_ENABLE_STEAM_SHORTCUT OFF CACHE BOOL "" FORCE)
-set(CHIAKI_LIB_ENABLE_OPUS       ON  CACHE BOOL "" FORCE)
+# Disable everything a headless LAN capture sidecar doesn't need. Each of these
+# is an AUTO/ON path in chiaki's root that pulls extra deps and can fail at
+# configure. We need only: the core lib, opus (audio), and curl (lib links it
+# unconditionally). RUDP is PSN-over-internet — we're LAN-only.
+set(CHIAKI_ENABLE_GUI              OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_CLI             OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_TESTS           OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_ANDROID         OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_BOREALIS        OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_STEAM_SHORTCUT  OFF CACHE BOOL "" FORCE)
+set(CHIAKI_ENABLE_SETSU           OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_STEAMDECK_NATIVE OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_SPEEX           OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_RUDP            OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_FFMPEG_DECODER  OFF CACHE STRING "" FORCE)
+set(CHIAKI_ENABLE_PI_DECODER      OFF CACHE STRING "" FORCE)
+set(CHIAKI_LIB_ENABLE_OPUS        ON  CACHE BOOL "" FORCE)
 add_subdirectory("${CHIAKI_ROOT}" chiaki-ng EXCLUDE_FROM_ALL)
 
 # ── fc-remoteplay executable ─────────────────────────────────────────────────
