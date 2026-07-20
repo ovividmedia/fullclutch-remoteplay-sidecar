@@ -8,6 +8,7 @@
 #include <nlohmann/json.hpp>
 
 #include <chrono>
+#include <cstdio>
 #include <cstring>
 #include <thread>
 
@@ -60,14 +61,25 @@ std::vector<uint8_t> Base64Decode(const std::string& in) {
     }
     return out;
 }
+// chiaki_log_cb_print writes to stdout. That is wrong for us twice over:
+// stdout carries the FCRP handshake line, and when stdout is a pipe (which it
+// always is under the desktop app) the CRT fully buffers it — main() flushes
+// its own handshake, but chiaki's log calls never flush, so every diagnostic
+// died in the buffer and the log file showed only libwebsockets stderr output.
+// Write to stderr and flush each line so failures are actually visible.
+void LogToStderr(ChiakiLogLevel level, const char* msg, void* /*user*/) {
+    std::fprintf(stderr, "[chiaki:%c] %s\n", chiaki_log_level_char(level), msg);
+    std::fflush(stderr);
+}
 }  // namespace
 
 SessionBridge::SessionBridge(EmitText emit_text, EmitBinary emit_binary)
     : emit_text_(std::move(emit_text)), emit_binary_(std::move(emit_binary)) {
-    // chiaki_log_cb_print writes to stdout — our stdout carries the FCRP
-    // handshake, so keep the mask tight (warnings/errors only).
-    chiaki_log_init(&log_, CHIAKI_LOG_WARNING | CHIAKI_LOG_ERROR,
-                    chiaki_log_cb_print, nullptr);
+    // INFO included: chiaki reports the session-request/ctrl handshake at INFO,
+    // which is exactly what is needed to tell a stale registration from an
+    // unreachable console. VERBOSE/DEBUG stay off — they log per-packet.
+    chiaki_log_init(&log_, CHIAKI_LOG_INFO | CHIAKI_LOG_WARNING | CHIAKI_LOG_ERROR,
+                    LogToStderr, nullptr);
 }
 
 SessionBridge::~SessionBridge() {
