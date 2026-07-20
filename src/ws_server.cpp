@@ -31,18 +31,30 @@ int WsServer::LwsCallback(lws* wsi, lws_callback_reasons reason, void* user, voi
     auto* pss  = static_cast<PerSession*>(user);
 
     switch (reason) {
-        case LWS_CALLBACK_ESTABLISHED: {
-            // Reject a second client — one Remote Play session at a time.
-            if (self->client_) return -1;
-
-            // Validate ?token=<hex> against the expected value.
+        // Auth MUST happen during the upgrade handshake. Returning non-zero here
+        // rejects the connection before it completes, so a bad token never
+        // reaches an "open" socket. Doing this at ESTABLISHED is too late — the
+        // handshake has already succeeded and the client sees the socket open.
+        case LWS_CALLBACK_FILTER_PROTOCOL_CONNECTION: {
+            // One Remote Play session at a time.
+            if (self->client_) {
+                lwsl_warn("[ws] rejected: a client is already connected\n");
+                return -1;
+            }
+            // Validate ?token=<hex> against the expected value. URI args are
+            // available at this stage (headers parsed, handshake not yet sent).
             char buf[256] = {0};
             int n = lws_get_urlarg_by_name_safe(wsi, "token", buf, sizeof(buf) - 1);
             if (n <= 0 || self->token_ != buf) {
                 lwsl_warn("[ws] rejected connection: bad/missing token\n");
                 return -1;
             }
-            pss->authed   = true;
+            break;
+        }
+
+        case LWS_CALLBACK_ESTABLISHED: {
+            // Passed the token filter above — mark authed and claim the slot.
+            if (pss) pss->authed = true;
             self->client_ = wsi;
             if (self->on_connect_) self->on_connect_();
             break;
@@ -54,6 +66,15 @@ int WsServer::LwsCallback(lws* wsi, lws_callback_reasons reason, void* user, voi
             if (self->on_text_ && in && len) {
                 self->on_text_(std::string(static_cast<const char*>(in), len));
             }
+            break;
+        }
+
+        case LWS_CALLBACK_EVENT_WAIT_CANCELLED: {
+            // SendText/SendBinary woke the loop from another thread. Request a
+            // writeable callback on the client so FlushQueue runs on THIS thread
+            // (lws_callback_on_writable is the only cross-thread-safe entry, and
+            // even it must be reached via the cancel-service wake).
+            if (self->client_) lws_callback_on_writable(self->client_);
             break;
         }
 
@@ -77,16 +98,26 @@ int WsServer::LwsCallback(lws* wsi, lws_callback_reasons reason, void* user, voi
 }
 
 void WsServer::FlushQueue(lws* wsi) {
-    std::deque<OutMsg> pending;
+    // Write exactly ONE message per writeable callback and re-arm if more remain.
+    // Batching multiple lws_write calls in a single callback risks partial writes
+    // and ignores socket backpressure — which matters at 1080p60 video rates.
+    OutMsg msg;
+    bool have = false, more = false;
     {
         std::lock_guard<std::mutex> lk(queue_mtx_);
-        pending.swap(queue_);
+        if (!queue_.empty()) {
+            msg  = std::move(queue_.front());
+            queue_.pop_front();
+            have = true;
+            more = !queue_.empty();
+        }
     }
-    for (auto& msg : pending) {
+    if (have) {
         auto framed = WithLwsPre(msg.payload);
         lws_write(wsi, framed.data() + LWS_PRE, msg.payload.size(),
                   msg.binary ? LWS_WRITE_BINARY : LWS_WRITE_TEXT);
     }
+    if (more) lws_callback_on_writable(wsi);
 }
 
 uint16_t WsServer::Start(uint16_t port, std::string token) {
