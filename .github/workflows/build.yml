@@ -37,6 +37,10 @@ jobs:
           # one on PATH, and nanopb's generator runs under whichever python
           # CMake finds — it must be able to import google.protobuf.
           "$RUNNER_TEMP/cmake-venv/Scripts/pip" install cmake==3.31.6 protobuf grpcio-tools
+          # Windows venvs ship python.exe but no python3.exe; chiaki's CMake
+          # looks for "python3" and would otherwise resolve to the toolcache
+          # python, which lacks the protobuf module installed above.
+          cp "$RUNNER_TEMP/cmake-venv/Scripts/python.exe" "$RUNNER_TEMP/cmake-venv/Scripts/python3.exe"
           echo "$RUNNER_TEMP/cmake-venv/Scripts" >> "$GITHUB_PATH"
 
       - name: Setup MSVC
