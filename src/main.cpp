@@ -93,6 +93,18 @@ int main(int argc, char** argv) {
             bridge.RequestIdr();
         } else if (type == cmd::kLoginPin) {
             bridge.LoginPin(msg.value("pin", ""));
+        } else if (type == cmd::kInput) {
+            // Controller state forwarded from the client's gamepad. The renderer
+            // has already mapped to chiaki's button bitmask + analog ranges.
+            SessionBridge::InputState in;
+            in.buttons = msg.value("buttons", 0u);
+            in.l2 = static_cast<uint8_t>(msg.value("l2", 0));
+            in.r2 = static_cast<uint8_t>(msg.value("r2", 0));
+            in.left_x  = static_cast<int16_t>(msg.value("lx", 0));
+            in.left_y  = static_cast<int16_t>(msg.value("ly", 0));
+            in.right_x = static_cast<int16_t>(msg.value("rx", 0));
+            in.right_y = static_cast<int16_t>(msg.value("ry", 0));
+            bridge.SetControllerState(in);
         }
     });
 

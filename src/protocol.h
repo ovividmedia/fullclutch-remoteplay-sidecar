@@ -55,6 +55,7 @@ constexpr const char* kConnect     = "connect";
 constexpr const char* kDisconnect  = "disconnect";
 constexpr const char* kRequestIdr  = "requestIdr";
 constexpr const char* kLoginPin    = "loginPin";
+constexpr const char* kInput       = "input";
 }  // namespace cmd
 
 // Control message `type` strings (sidecar → client)

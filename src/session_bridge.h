@@ -49,6 +49,15 @@ public:
     void RequestIdr();
     void LoginPin(const std::string& pin);
 
+    // Controller input forwarded from the client gamepad (already mapped to
+    // chiaki's button bitmask + analog ranges by the renderer).
+    struct InputState {
+        uint32_t buttons = 0;
+        uint8_t  l2 = 0, r2 = 0;
+        int16_t  left_x = 0, left_y = 0, right_x = 0, right_y = 0;
+    };
+    void SetControllerState(const InputState& in);
+
 private:
     // chiaki C callbacks (static thunks → member methods). Signatures match
     // the chiaki-ng headers exactly.

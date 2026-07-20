@@ -425,6 +425,22 @@ void SessionBridge::LoginPin(const std::string& pin) {
     }
 }
 
+void SessionBridge::SetControllerState(const InputState& in) {
+    std::lock_guard<std::mutex> lk(state_mtx_);
+    if (!session_active_ || !session_) return;
+    ChiakiControllerState state;
+    chiaki_controller_state_set_idle(&state);  // zeroes buttons + centres sticks
+    state.buttons  = in.buttons;
+    state.l2_state = in.l2;
+    state.r2_state = in.r2;
+    state.left_x   = in.left_x;
+    state.left_y   = in.left_y;
+    state.right_x  = in.right_x;
+    state.right_y  = in.right_y;
+    // chiaki's feedback sender picks this up and forwards it to the console.
+    chiaki_session_set_controller_state(session_.get(), &state);
+}
+
 void SessionBridge::TeardownSession() {
     std::lock_guard<std::mutex> lk(state_mtx_);
     if (session_) {
