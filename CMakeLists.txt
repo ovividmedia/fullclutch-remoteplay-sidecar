@@ -97,6 +97,8 @@ target_link_libraries(fc-remoteplay PRIVATE
 
 if(WIN32)
   target_link_libraries(fc-remoteplay PRIVATE ws2_32 iphlpapi)
+  # windows.h defines min/max macros that break std::min/std::max.
+  target_compile_definitions(fc-remoteplay PRIVATE NOMINMAX)
 endif()
 
 install(TARGETS fc-remoteplay RUNTIME DESTINATION bin)
