@@ -27,10 +27,14 @@ jobs:
       # chiaki-ng calls the FindPythonInterp module and its vendored libs
       # declare cmake_minimum_required < 3.5 — both removed/rejected by CMake
       # 4.x (the default on current runners). Pin to the last 3.x.
+      # Installed from PyPI: the setup-cmake action downloads via
+      # api.github.com, which has been flaky enough to kill whole runs.
       - name: Pin CMake 3.31
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '3.31.6'
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/cmake-venv"
+          "$RUNNER_TEMP/cmake-venv/Scripts/pip" install cmake==3.31.6
+          echo "$RUNNER_TEMP/cmake-venv/Scripts" >> "$GITHUB_PATH"
 
       - name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
@@ -105,11 +109,13 @@ jobs:
           brew install ninja pkg-config openssl@3 opus json-c libevent miniupnpc protobuf
           python3 -m pip install --break-system-packages --upgrade protobuf grpcio-tools
 
-      # See Windows job — pin CMake < 4.x for chiaki-ng compatibility.
+      # See Windows job — pin CMake < 4.x for chiaki-ng compatibility,
+      # installed from PyPI to avoid the flaky api.github.com download.
       - name: Pin CMake 3.31
-        uses: jwlawson/actions-setup-cmake@v2
-        with:
-          cmake-version: '3.31.6'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/cmake-venv"
+          "$RUNNER_TEMP/cmake-venv/bin/pip" install cmake==3.31.6
+          echo "$RUNNER_TEMP/cmake-venv/bin" >> "$GITHUB_PATH"
 
       - name: Configure
         run: >
